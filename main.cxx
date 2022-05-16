@@ -7,8 +7,7 @@
 
 using namespace std;
 int DownloadFile(const char* url, const char* pagefilename, int progressbar=1);
-//string szDataFilePath="https://raw.githubusercontent.com/habi498/VCMP-Store-Downloader/main/data";
-string szDataFilePath="https://npc-for-vcmp.sourceforge.io/data";
+string szDataFilePath="https://vc-mp-store-downloader.sourceforge.io/data";
 
 string szLocalDataFile="data";
 string szfileParam1="Server=";
@@ -74,6 +73,7 @@ int main(int argc, char** argv)
 									{	
 										char* memblock = new  char [4];
 										input.read (memblock, 4);
+										input.close();
 										if(memblock[0]==0x50 && memblock[1]==0x4b &&
 										memblock[2]==0x03 && memblock[3]==0x04)
 										{
@@ -84,7 +84,14 @@ int main(int argc, char** argv)
 							and https://stackoverflow.com/questions/18194688/how-can-i-determine-if-a-file-is-a-zip-file*/
 										string szCmd2="unzip -o downloads/"+szFileName+" -d \"C:/Users/%username%/AppData/Roaming/VCMP/04beta/store/"+szFileName+"\"";
 										system(szCmd2.c_str());
-										}else printf("Failed. File is not a zip file");
+										}else 
+										{
+											printf("Failed. File is not a zip file\n");
+											//delete it
+											string szCmd3="del \"downloads\\"+szFileName+"\"";
+											system(szCmd3.c_str());
+										}
+										delete[] memblock;
 									}
 									}else printf("Failed");
 								}
@@ -105,8 +112,8 @@ int main(int argc, char** argv)
 				
 			}else printf("Package name not specified\n");
 			return 0;
-		}
-	}
+		}else printf("Invalid argument %s", argv[1]);
+	}else printf("No argument passed. Use %s update or install", argv[0]);
 }
 #define SKIP_PEER_VERIFICATION
  static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)

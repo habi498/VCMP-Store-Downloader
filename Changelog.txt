@@ -1,0 +1,1 @@
+16.05.2022: Changed masterlist to  domain vcmp-store-downloader.sourceforge.io
