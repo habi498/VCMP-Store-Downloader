@@ -18,7 +18,7 @@ store install xxx.xxx.xxx.xxx:PORT
 (Replace xxx with the server's ip address and PORT by a number)
 
 ## Adding URL's to Store-Downloader
-The Store-Downloader's masterlist is hosted at and URL's can be added through https://vc-mp-store-downloader.sourceforge.io/index54.html
+The Store-Downloader's masterlist is hosted at and URL's can be added through https://vc-mp-store-downloader.sourceforge.io/index.html
 
 The URL should be direct and point to a zip file
 eg. ..../store.zip
