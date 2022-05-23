@@ -1,0 +1,2 @@
+Open a command prompt in this directory and run the following command:
+Ahk2Exe.exe /in store-gui.ahk /out store-gui.exe /icon icon.ico /base AutoHotkeySC.bin

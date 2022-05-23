@@ -1,35 +1,104 @@
-#include "main.h"
 #include <string>
 #include <fstream>
 #include <ctime>
 #include <curl.h>
-#include <math.h>
+
+#include <conio.h>
 
 using namespace std;
+#define MAX_SERVERS 1024
+#define VERSION 1000
 int DownloadFile(const char* url, const char* pagefilename, int progressbar=1);
+unsigned char DoUpgrade(string szServerIP, string szPackageURL);
+unsigned char DownloadAndInstallPackage(string szServerIP, string szPackageURL);
+int GetFileSize(const char* szPackageURL);
+int get_file_size(std::string filename); // path to file
 string szDataFilePath="https://vc-mp-store-downloader.sourceforge.io/data";
 
 string szLocalDataFile="data";
 string szfileParam1="Server=";
 string szfileParam2=", ZipFile=";
-int main(int argc, char** argv)
+int DoUpdate()
 {
 	string szfileParam1="Server=";
 	string szfileParam2=", ZipFile=";
+	time_t now = time(nullptr);
+	string ts = to_string(now);
+	szDataFilePath=szDataFilePath+string("?ts=")+ts;
+	string path=szLocalDataFile;
+	int success=DownloadFile(szDataFilePath.c_str(), path.c_str(),0);
+	return success;
+}
+int main(int argc, char** argv)
+{
 	if(argc > 1)
 	{
 		if(strcmp(argv[1],"update")==0)
 		{
-			time_t now = time(nullptr);
-			string ts = to_string(now);
-			szDataFilePath=szDataFilePath+string("?ts=")+ts;
-			string path=szLocalDataFile;
-			int success=DownloadFile(szDataFilePath.c_str(), path.c_str(),0);
-			if(success)printf("Success");else printf("Failed");
-			//string szCmd="curl "+szDataFilePath+" --output "+path;
-			//printf("szCmd is %s\n",szCmd.c_str());
-			///system(szCmd.c_str());
+			int success=DoUpdate();
+			if(success)printf("Success");
+			else printf("Failed");
 			return 0;
+		}else if(strcmp(argv[1],"upgrade")==0)
+		{
+			printf("Updating from Masterlist...");
+			DoUpdate();
+			printf("Done\n");
+			string szServerIPArray[MAX_SERVERS];//Store 1024 Server IP
+			string szStoreURLArray[MAX_SERVERS];
+			unsigned short iServerCount=0;
+			string line;
+				ifstream myfile(szLocalDataFile.c_str());
+				if (myfile.is_open())
+				{
+					bool bPackageFound=false;
+					printf("Determining which packages need upgrades...");
+					while ( getline (myfile,line) )
+					{
+						size_t dw_indexOfServer=line.find(szfileParam1);
+						if(dw_indexOfServer!=string::npos)
+						{
+							dw_indexOfServer+=szfileParam1.length(); //to obtain server ip next
+							size_t dw_indexOfURL=line.find(szfileParam2);
+							if( dw_indexOfURL != string::npos )
+							{
+								string szServerIP=line.substr(dw_indexOfServer, dw_indexOfURL-dw_indexOfServer);
+								dw_indexOfURL+=szfileParam2.length();
+								string szPackageURL=line.substr(dw_indexOfURL);
+								if(DoUpgrade(szServerIP, szPackageURL))
+								{
+									szServerIPArray[iServerCount]=szServerIP;
+									szStoreURLArray[iServerCount]=szPackageURL;
+									iServerCount++;
+								}
+							}
+						}
+					}
+					printf("Done\n");
+					myfile.close();
+					if(iServerCount>0)
+					{
+						printf("%d packages needs upgrades based on check by file size. They are ", iServerCount);
+						string Packages="";
+						for(int i=0; i<iServerCount; i++)
+						{
+							Packages+=szServerIPArray[i]+"\t";
+						}
+						printf("%s\n.", Packages.c_str());
+						for(int i=0; i<iServerCount; i++)
+						{
+							printf("Installing package %d of %d\n", i+1, iServerCount);
+							printf("Name: %s Location: %s\n", szServerIPArray[i].c_str(), szStoreURLArray[i].c_str());
+							unsigned char bSuccess=DownloadAndInstallPackage(szServerIPArray[i], szStoreURLArray[i]);
+						}
+					}else printf("All packages are in par with the latest of the stores available\n");
+				}else printf("Unable to search for packages");
+				if( argc > 2 )
+				{
+					//wait for user to close the window
+					printf("Press any key to continue");
+					_getch();
+				}
 		}else if(strcmp(argv[1],"install")==0)
 		{
 			if(argc > 2)
@@ -54,52 +123,16 @@ int main(int argc, char** argv)
 								dw_indexOfURL+=szfileParam2.length();
 								string szPackageURL=line.substr(dw_indexOfURL);
 								printf("Package URL is %s\n", szPackageURL.c_str());
-								string szFileName=string(argv[2]);
-								size_t dw_indexOfColon=szFileName.find(":");
-								if(dw_indexOfColon!=string::npos)
+								unsigned char bSuccess=DownloadAndInstallPackage(string(argv[2]), szPackageURL);
+								if(bSuccess)
 								{
-									szFileName.replace(dw_indexOfColon,1,"-");
-								}
-								if (CreateDirectory("downloads", NULL) ||
-									ERROR_ALREADY_EXISTS == GetLastError())
-								{
-									string path="downloads/"+szFileName;
-									int success=DownloadFile(szPackageURL.c_str(), path.c_str());
-									if(success)
+									if (argc > 3)
 									{
-									printf("Success. Now unzipping\n");
-									std::ifstream input( path.c_str(), std::ios::binary );
-									if (input.is_open())
-									{	
-										char* memblock = new  char [4];
-										input.read (memblock, 4);
-										input.close();
-										if(memblock[0]==0x50 && memblock[1]==0x4b &&
-										memblock[2]==0x03 && memblock[3]==0x04)
-										{
-											//It is a zip file. 
-											/*
-											According to http://www.pkware.com/documents/casestudies/APPNOTE.TXT, a ZIP file starts with the "local file header signature"
-							0x50, 0x4b, 0x03, 0x04 
-							and https://stackoverflow.com/questions/18194688/how-can-i-determine-if-a-file-is-a-zip-file*/
-										string szCmd2="unzip -o downloads/"+szFileName+" -d \"C:/Users/%username%/AppData/Roaming/VCMP/04beta/store/"+szFileName+"\"";
-										system(szCmd2.c_str());
-										}else 
-										{
-											printf("Failed. File is not a zip file\n");
-											//delete it
-											string szCmd3="del \"downloads\\"+szFileName+"\"";
-											system(szCmd3.c_str());
-										}
-										delete[] memblock;
+										//wait for user to close the window
+										printf("Press any key to continue");
+										_getch();
 									}
-									}else printf("Failed");
 								}
-								else
-								{
-									 printf("Failed to create folder");
-								}
-								
 							}
 								
 						}
@@ -112,118 +145,100 @@ int main(int argc, char** argv)
 				
 			}else printf("Package name not specified\n");
 			return 0;
+		}else if(strcmp(argv[1],"appupdate")==0)
+		{
+			string szCmd = "update.exe store "+to_string(VERSION);
+			if(argc >2 )
+				szCmd+=" "+string(argv[2]);
+			system(szCmd.c_str());
 		}else printf("Invalid argument %s", argv[1]);
 	}else printf("No argument passed. Use %s update or install", argv[0]);
 }
 #define SKIP_PEER_VERIFICATION
- static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-  size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
-  return written;
-}
-/* Credits: fvu @ stackoverflow.com
-https://stackoverflow.com/questions/1637587/c-libcurl-console-progress-bar
-*/
-int progress_func(void* ptr, double TotalToDownload, double NowDownloaded, 
-                    double TotalToUpload, double NowUploaded)
-{
-    // ensure that the file to be downloaded is not empty
-    // because that would cause a division by zero error later on
-    if (TotalToDownload <= 0.0) {
-        return 0;
-    }
 
-    // how wide you want the progress meter to be
-    int totaldotz=40;
-    double fractiondownloaded = NowDownloaded / TotalToDownload;
-    // part of the progressmeter that's already "full"
-    int dotz = (int) round(fractiondownloaded * totaldotz);
 
-    // create the "meter"
-    int ii=0;
-    printf("%3.0f%% [",fractiondownloaded*100);
-    // part  that's full already
-    for ( ; ii < dotz;ii++) {
-        printf("=");
-    }
-    // remaining part (spaces)
-    for ( ; ii < totaldotz;ii++) {
-        printf(" ");
-    }
-    // and back to line begin - do not forget the fflush to avoid output buffering problems!
-    printf("]\r");
-    fflush(stdout);
-    // if you don't return 0, the transfer will be aborted - see the documentation
-    return 0; 
-}
-int DownloadFile(const char* url, const char* pagefilename, int progressbar)
+
+unsigned char DoUpgrade(string szServerIP, string szPackageURL)
 {
-  CURL *curl;
-  CURLcode res;
-  FILE *pagefile;
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  int success=0;
-  curl = curl_easy_init();
-  if(curl) { 
-    curl_easy_setopt(curl, CURLOPT_URL, url);
- 
-#ifdef SKIP_PEER_VERIFICATION
-    /*
-     * If you want to connect to a site who is not using a certificate that is
-     * signed by one of the certs in the CA bundle you have, you can skip the
-     * verification of the server's certificate. This makes the connection
-     * A LOT LESS SECURE.
-     *
-     * If you have a CA cert for the server stored someplace else than in the
-     * default bundle, then the CURLOPT_CAPATH option might come handy for
-     * you.
-     */
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
- 
-#ifdef SKIP_HOSTNAME_VERIFICATION
-    /*
-     * If the site you are connecting to uses a different host name that what
-     * they have mentioned in their server certificate's commonName (or
-     * subjectAltName) fields, libcurl will refuse to connect. You can skip
-     * this check, but this will make the connection less secure.
-     */
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
- 
-     /* send all data to this function  */
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
- 
-  /* open the file */
-  pagefile = fopen(pagefilename, "wb");
-  if(pagefile) {
- 
-    /* write the page body to this file handle */
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, pagefile);
- 
-	if(progressbar)
+	string szFileName=szServerIP;
+	size_t dw_indexOfColon = szFileName.find(":");
+	if (dw_indexOfColon != string::npos)
 	{
-		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
-		curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func); 
+		szFileName.replace(dw_indexOfColon, 1, "-");
 	}
-    /* get it! */
-    res = curl_easy_perform(curl);
- 
-    /* close the header file */
-    fclose(pagefile);
-  }
- 
-    /* Check for errors */
-    if(res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
-	else success=1;
- 
-    /* always cleanup */
-    curl_easy_cleanup(curl);
-  }
- 
-  curl_global_cleanup();
- 
-  return success;
+	int iFileSize=get_file_size("downloads/"+szFileName);
+	if(iFileSize==-1)
+	{
+		//File does not exist
+		return 1;
+	}
+	if(iFileSize==0)return 1;//precaution
+	//curl checks for file, header etc here
+	int iFileSizeNew=GetFileSize(szPackageURL.c_str());
+	if(iFileSizeNew==0)
+	{
+		//cannot determine new file size
+		return 1;
+	}
+	if(iFileSize==iFileSizeNew)
+	{
+		//conclude it is same file
+		//so return 0
+		return 0;
+	}
+	return 1;
+}
+unsigned char DownloadAndInstallPackage(string szServerIP, string szPackageURL)
+{
+	string szFileName=szServerIP;
+	size_t dw_indexOfColon = szFileName.find(":");
+	if (dw_indexOfColon != string::npos)
+	{
+		szFileName.replace(dw_indexOfColon, 1, "-");
+	}
+	if (CreateDirectory("downloads", NULL) ||
+		ERROR_ALREADY_EXISTS == GetLastError())
+	{
+		string path = "downloads/" + szFileName;
+		int success = DownloadFile(szPackageURL.c_str(), path.c_str());
+		if (success)
+		{
+			printf("Download success\n");
+			std::ifstream input(path.c_str(), std::ios::binary);
+			if (input.is_open())
+			{
+				char* memblock = new  char[4];
+				input.read(memblock, 4);
+				input.close();
+				if (memblock[0] == 0x50 && memblock[1] == 0x4b &&
+					memblock[2] == 0x03 && memblock[3] == 0x04)
+				{
+					//It is a zip file. 
+					/*
+					According to http://www.pkware.com/documents/casestudies/APPNOTE.TXT, a ZIP file starts with the "local file header signature"
+	0x50, 0x4b, 0x03, 0x04
+	and https://stackoverflow.com/questions/18194688/how-can-i-determine-if-a-file-is-a-zip-file*/
+					printf("Success: File is a zip file. Now unzipping to VCMP local store folder\n");
+					string szCmd2 = "unzip -o downloads/" + szFileName + " -d \"C:/Users/%username%/AppData/Roaming/VCMP/04beta/store/" + szFileName + "\"";
+					system(szCmd2.c_str());
+					return 1;
+					
+				}
+				else
+				{
+					printf("Failed. File is not a zip file\n");
+					//delete it
+					string szCmd3 = "del \"downloads\\" + szFileName + "\"";
+					system(szCmd3.c_str());
+				}
+				delete[] memblock;
+			}
+		}
+		else printf("Failed");
+	}
+	else
+	{
+		printf("Failed to create folder");
+	}
+	return 0;
 }
