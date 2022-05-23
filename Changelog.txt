@@ -1,2 +1,2 @@
 16.05.2022 (v1.1): Changed masterlist to  domain vcmp-store-downloader.sourceforge.io
-23.05.2022 (v1.1-R2): Made GUI application store-gui.exe through which stores can be downloaded easily.
+23.05.2022 (v1.2): Made GUI application store-gui.exe through which stores can be downloaded easily.
