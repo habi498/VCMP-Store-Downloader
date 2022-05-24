@@ -54,7 +54,7 @@ This command causes store.exe to call another application update.exe whose opera
 
 ## Command Line Options of update.exe
 This is an application to check for the updates of store.exe and store-gui.exe from online. If new updates are available, it will download them.
-### store/store-gui
+### 1. store/store-gui
 ```
 update [store/store-gui] 
 ```
