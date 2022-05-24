@@ -62,6 +62,7 @@ add_custom_command(TARGET store POST_BUILD        # Adds a post-build event to M
         $<TARGET_FILE_DIR:store> )  		# <--this is out-file path
 
 
+#[[
 add_custom_command(
     TARGET store 
 POST_BUILD
@@ -72,5 +73,5 @@ $<TARGET_FILE_DIR:store>
 COMMAND del store-gui.exe
 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/store-gui-src/src+compiler
 )
-
+]]
 
