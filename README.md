@@ -101,6 +101,6 @@ Value: 1000 (first version)
 Key 2: app
 Value: store (or) store-gui
 Response: 1 (Means update available for app), 0 (Already the latest version)
-Response (Secondary): Invalid app name (When Value of Key 2 is neither 'store' nor 'store-gui'
+Response (Secondary): Invalid app name ( When Value of Key 2 is neither 'store' nor 'store-gui' )
 ```
 
