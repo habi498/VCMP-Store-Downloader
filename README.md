@@ -59,3 +59,48 @@ This is an application to check for the updates of store.exe and store-gui.exe f
 update [store/store-gui] 
 ```
 If for example, it is called with store-gui argument, then it checks update for application store-gui.exe
+
+## Web
+The folder /web contains html and php files. The program store.exe and update.exe sends GET and POST requests to these files when appropriately hosted. 
+Note that the file data in folder web must be given permission chmod 777
+
+### POST and GET Requests
+```
+File: get-store-url.php
+Objective: To retrieve the URL of the store of a server, the details which are saved in data file.
+Method: POST
+Key: server
+Value: ip:port
+Response: URL on success, or "Error: "
+
+File: file.php
+Objective: Add details (Server IP and URL of its store) to the data file.
+Method: POST
+Key: server
+Value: ip:port
+Key 2: zipfileurl
+Value: url
+Response: Done. This will be reflected in the application. 
+Response 2: Updated. This will be reflected in the application. (when the server:ip already exists)
+
+File: file.php
+Objective: Delete the details of a server.
+Method: POST
+Key: server
+Value: ip-port
+Key 2: zipfileurl
+Value: delete
+Response: Updated. This will be reflected in the application.
+Response 2: Server:Port not found in database (on failure)
+
+File: update.php
+Objective: To check if update is available either for store.exe or store-gui.exe
+Method: GET
+Key: current_version
+Value: 1000 (first version)
+Key 2: app
+Value: store (or) store-gui
+Response: 1 (Means update available for app), 0 (Already the latest version)
+Response (Secondary): Invalid app name (When Value of Key 2 is neither 'store' nor 'store-gui'
+```
+
