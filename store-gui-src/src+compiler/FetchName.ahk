@@ -32,12 +32,15 @@ GetServerName(szServerIP, iServerPort)
 		NumPut(iPortLessSignificant, &Buffer, 4+iCount)
 		NumPut(iPortMostSignificatn, &Buffer, 4+iCount+1)
 		NumPut(0x69,&Buffer, 4+iCount+2)
-		bFlag:=0
+		bFlag:=
 		sendpacket:
+		SplashTextOn , 300 ,100 , store-gui , Contacting %szServerIP%:%iServerPort%...
+		
 		Client.Send(&Buffer,11)
 		try  ; Attempts to execute code.
 		{
 			r:=Client.Recv(Reply)
+			SplashTextOff
 			if(r=-1)
 			{
 				if(!bFlag)
@@ -56,10 +59,12 @@ GetServerName(szServerIP, iServerPort)
 			;MsgBox, %iNameB0% %iNameB1% %iNameB2% %iNameB3%
 			;MsgBox, The length of server name is %iNameLen%
 			String:=StrGet(&Reply+32 , iNameLen , Encoding := None)
+			SplashTextOff
 			return String
 		}
 		catch e  ; Handles the first error/exception raised by the block above.
 		{
+			SplashTextOff
 			;MsgBox, An exception was thrown!`nSpecifically: %e%
 			;Exit
 		}

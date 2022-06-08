@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+form * {
+  display: block;
+  margin: 10px;
+}
+</style>
+<script language="Javascript" >
+function load()
+{
+readTextFile("data");
+}
+function readTextFile(file)
+{
+var fileDisplayArea = document.getElementById('fileDisplayArea');   
+   var rawFile = new XMLHttpRequest();
+    rawFile.open("GET", file, false);
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4)
+        {
+            if(rawFile.status === 200 || rawFile.status == 0)
+            {
+                var allText = rawFile.responseText;
+                fileDisplayArea.innerText = allText ;
+            }
+        }
+    }
+    rawFile.send(null);
+}
+function download(server, zipfileurl) {
+readTextFile("data");
+//var str='Server='+server+', ZipFile='+zipfileurl;
+var f = document.createElement('form');
+f.action='https://vc-mp-store-downloader.sourceforge.io/file.php';
+f.method='POST';
+f.target='_blank';
+
+var i=document.createElement('input');
+i.type='hidden';
+i.name='server';
+i.value=server;
+f.appendChild(i);
+
+var j=document.createElement('input');
+j.type='hidden';
+j.name='zipfileurl';
+j.value=zipfileurl;
+f.appendChild(j);
+
+document.body.appendChild(f);
+f.submit();
+}
+</script>
+
+</head>
+<body onload="load()">
+
+<form onsubmit="download(this['server'].value, this['zipfileurl'].value)">
+  Enter Server:Port without spaces. eg. 127.0.0.1:8192 ( though it is never 127.0.0.1 )
+  <input type="text" name="server" value="127.0.0.1:8192">
+  Enter the url of the zip file containing the store. This zip file will be extracted to 
+  C:/Users/%username%/AppData/Roaming/VCMP/04beta/store/server-ip/ folder. i.e contents of
+  zip file will be folders like sounds, sprites, skins, vehicles, weapons, ... (So the contents 
+  should be directly zipped rather than creating an intermediate folder )
+  <input type="text" name="zipfileurl" size="50" value="">
+  <input type="submit" value="Add ">
+  <pre id="fileDisplayArea" ><pre>
+</form>
+
+</body>
+
+</html>

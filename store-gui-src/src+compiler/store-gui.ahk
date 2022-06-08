@@ -31,6 +31,7 @@ Gui, Add, Text,vIP w250,
 SplashTextOn , 300 ,100 , store-gui , Loading...
 
 CreateListView:
+Loading:=true
 szCmd:="store.exe update"
 SplashTextOn , 300 ,100 , store-gui , Loading...`nContacting Master List
 RunWait, %szCmd%, ,"Hide"
@@ -75,6 +76,7 @@ if FileExist(szDataFile)
 SplashTextOn , 300 ,100 , store-gui , Loading...`nCompleted
 LV_ModifyCol(1, "Auto" )
 SplashTextOff
+Loading:=false
 Gui, Show
 return
 
@@ -94,6 +96,21 @@ if (A_GuiEvent = "DoubleClick")  ; There are many other possible values the scri
 	global Array
 	szIP:=Array[A_EventInfo][1]
 	GuiControl, , IP , %szIP%
+	LV_GetText(szServerName, A_EventInfo, 1)
+	if(szServerName=szIP)
+	{
+		iPosColon:=InStr(szIP, ":")
+		global Loading
+		if(iPosColon && !Loading)
+		{
+			szIPAddr:=SubStr(szIP, 1, iPosColon-1)
+			iPort:=SubStr(szIP, iPosColon+1)
+			szServerName:=GetServerName(szIPAddr, iPort)
+			if(szServerName)
+				LV_Modify(A_EventInfo,"", szServerName)
+		}
+	}
+	
 }else if(A_GuiEvent = "I")
 {
 	If(InStr(ErrorLevel, "S", true))
