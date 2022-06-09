@@ -1,6 +1,6 @@
 <?php
 define("STORE_NEWVERSION", 1000);
-define("GUI_NEWVERSION", 1000);
+define("GUI_NEWVERSION", 1001);
 $var_oldver = $_GET['current_version'];
 $var_app=$_GET['app'];
 if(empty($var_oldver))die("Error, You did not provided your version");

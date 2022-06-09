@@ -7,7 +7,7 @@
 
 using namespace std;
 #define MAX_SERVERS 1024
-#define VERSION 1000
+#define VERSION 1001
 int DownloadFile(const char* url, const char* pagefilename, int progressbar=1);
 unsigned char DoUpgrade(string szServerIP, string szPackageURL);
 unsigned char DownloadAndInstallPackage(string szServerIP, string szPackageURL);
@@ -151,8 +151,21 @@ int main(int argc, char** argv)
 			if(argc >2 )
 				szCmd+=" "+string(argv[2]);
 			system(szCmd.c_str());
+		}else if(strcmp(argv[1], "version")==0)
+		{
+			printf("store.exe Version is %d\n", VERSION);
+		}else if(strcmp(argv[1], "help")==0)
+		{
+			printf("Usage: %s command \n\
+where command is \n\
+install - To install a package\n\
+update - To update packages list\n\
+upgrade - Upgrade all installed packages\n\
+help - show help message\n\
+appupdate - To check for updates for the app itself\n\
+version - Show version number", argv[0]);
 		}else printf("Invalid argument %s", argv[1]);
-	}else printf("No argument passed. Use %s update or install", argv[0]);
+	}else printf("No argument passed. Use %s update/install/upgrade/help/version", argv[0]);
 }
 #define SKIP_PEER_VERIFICATION
 

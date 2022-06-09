@@ -1,6 +1,6 @@
 ﻿#include FetchName.ahk
 #include OpenUrl.ahk
-VERSION:=1000
+VERSION:=1001
 ; for GetServerName(szServerIP, iServerPort)
 ; Allow the user to maximize or drag-resize the window:
 OnError("_OnError")
@@ -24,6 +24,7 @@ Menu, MyMenuBar, Add, Help, :HelpMenu
 Menu, ContextMenu, Add, Download Store, DownloadAndInstallStore
 Menu, ContextMenu, Add, Copy Server IP, CopyServerIP
 Menu, ContextMenu, Add, Copy Store URL, CopyStoreURL
+Menu, ContextMenu, Add, Copy Server Name, CopyServerName
 Gui, Menu, MyMenuBar ; Attach MyMenuBar to the GUI
 
 Gui, Add, ListView, xm r20 w700 vMyListView gMyListView -Multi AltSubmit, Server|Store URL
@@ -175,6 +176,14 @@ if RowNumber
 	LV_GetText(szTargetStoreURL, RowNumber, 2)
 	clipboard:=szTargetStoreURL
 } 
+return
+CopyServerName:
+RowNumber := LV_GetNext(0)  ;
+if RowNumber
+{
+	LV_GetText(szTargetServerName, RowNumber, 1)
+	clipboard:=szTargetServerName
+}
 return
 DownloadAndInstallStore:
 RowNumber := LV_GetNext(0)  ;
